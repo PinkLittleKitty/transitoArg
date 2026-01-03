@@ -263,11 +263,15 @@ document.addEventListener('DOMContentLoaded', () => {
         quizGame.classList.add('hidden');
         quizResults.classList.remove('hidden');
 
-        finalScoreVal.textContent = score;
+        const maxPointsPerQuestion = gameMode === 'expert' ? 20 : 10;
+        const maxPossibleScore = questionCount * maxPointsPerQuestion;
+        const percentage = maxPossibleScore > 0 ? (score / maxPossibleScore) * 100 : 0;
+
+        finalScoreVal.textContent = `${score} / ${maxPossibleScore} (${Math.round(percentage)}%)`;
 
         let stars = 1;
-        if (score >= 80) stars = 3;
-        else if (score >= 50) stars = 2;
+        if (percentage >= 80) stars = 3;
+        else if (percentage >= 50) stars = 2;
 
         starsDisplay.innerHTML = '';
         for (let i = 0; i < 3; i++) {
@@ -280,9 +284,9 @@ document.addEventListener('DOMContentLoaded', () => {
             starsDisplay.appendChild(star);
         }
 
-        if (score === 100) resultsMessage.textContent = "¡Perfecto! 🏆";
-        else if (score >= 80) resultsMessage.textContent = "¡Excelente! 👏";
-        else if (score >= 50) resultsMessage.textContent = "¡Bien hecho! 👍";
+        if (percentage === 100) resultsMessage.textContent = "¡Perfecto! 🏆";
+        else if (percentage >= 80) resultsMessage.textContent = "¡Excelente! 👏";
+        else if (percentage >= 50) resultsMessage.textContent = "¡Bien hecho! 👍";
         else resultsMessage.textContent = "Sigue practicando 💪";
     };
 
