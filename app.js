@@ -549,6 +549,8 @@ document.addEventListener('DOMContentLoaded', () => {
         resetQuizView();
     });
 
+    btnBackStudy.addEventListener('click', () => switchTab('study'));
+
     initCategoryFilters();
 
     const checkLocalEnv = () => {
