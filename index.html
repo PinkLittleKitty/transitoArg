@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz de Señales de Tránsito</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+</head>
+
+<body>
+
+    <header>
+        <div class="container">
+            <h1>🚦 Señales de Tránsito</h1>
+            <nav>
+                <button id="btn-study" class="nav-btn active">📖 Estudiar / Editar</button>
+                <button id="btn-quiz" class="nav-btn">📝 Examen</button>
+                <button id="btn-export" class="nav-btn export-btn">💾 Descargar Datos</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container">
+        <section id="study-section" class="active">
+            <div class="info-banner">
+                <p>💡 Haz clic en una señal para editar su nombre y categoría. Los nombres que ingreses se usarán en el
+                    examen.</p>
+                <div class="stats">
+                    <span>Identificadas: <strong id="identified-count">0</strong>/22</span>
+                </div>
+            </div>
+            <div class="signals-grid" id="signals-grid">
+            </div>
+        </section>
+
+        <section id="quiz-section" class="hidden">
+            <div id="quiz-start" class="quiz-container">
+                <h2>¿Listo para practicar?</h2>
+                <p>El examen usará las señales que ya has nombrado. ¡Asegúrate de estudiar primero!</p>
+                <button id="start-quiz-btn" class="primary-btn">Comenzar Examen</button>
+            </div>
+
+            <div id="quiz-game" class="quiz-container hidden">
+                <div class="quiz-header">
+                    <span id="score">Puntos: 0</span>
+                    <span id="streak">Racha: 🔥 0</span>
+                </div>
+                <div class="quiz-card">
+                    <img id="quiz-image" src="" alt="Señal de tránsito">
+                    <div class="options-grid" id="quiz-options">
+                    </div>
+                </div>
+                <div id="feedback" class="feedback hidden"></div>
+                <button id="next-question" class="secondary-btn hidden">Siguiente Señal</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="edit-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Editar Señal</h2>
+            <div class="modal-body">
+                <img id="modal-img" src="" alt="Señal a editar">
+                <div class="form-group">
+                    <label for="signal-name">Nombre de la Señal:</label>
+                    <input type="text" id="signal-name" placeholder="Ej: Pare, Ceda el Paso...">
+                </div>
+                <div class="form-group">
+                    <label for="signal-category">Categoría:</label>
+                    <select id="signal-category">
+                        <option value="Reglamentaria">Reglamentaria (Roja/Circular)</option>
+                        <option value="Preventiva">Preventiva (Amarilla/Rombo)</option>
+                        <option value="Informativa">Informativa (Azul/Verde)</option>
+                        <option value="Transitoria">Transitoria (Naranja)</option>
+                        <option value="Demarcación Horizontal">Demarcación Horizontal</option>
+                        <option value="Demarcación Luminosa">Demarcación Luminosa</option>
+                        <option value="Desconocido">Desconocido</option>
+                    </select>
+                </div>
+                <button id="save-signal" class="primary-btn">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>Estudio de Señales de Tránsito Argentinas</p>
+    </footer>
+
+    <script src="signals.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
