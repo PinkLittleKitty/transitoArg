@@ -126,12 +126,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const resultsMessage = document.getElementById('results-message');
     const btnRestart = document.getElementById('restart-quiz-btn');
     const btnBackStudy = document.getElementById('back-study-btn');
+    const retryContainer = document.getElementById('retry-container');
+    const retryMessage = document.getElementById('retry-message');
+    const btnRetry = document.getElementById('retry-mistakes-btn');
 
     let score = 0;
     let streak = 0;
     let currentQuestion = null;
     let questionCount = 0;
     let usedQuestions = new Set();
+    let wrongAnswers = [];
+    let isRetrySession = false;
 
     const switchTab = (mode) => {
         if (mode === 'study') {
@@ -242,13 +247,16 @@ document.addEventListener('DOMContentLoaded', () => {
         streak = 0;
         questionCount = 0;
         usedQuestions.clear();
+        wrongAnswers = [];
         isSecondCheck = false;
+        isRetrySession = false;
         updateScoreBoard();
     };
 
     const updateScoreBoard = () => {
         scoreSpan.textContent = `Puntos: ${score}`;
         streakSpan.textContent = `Racha: 🔥 ${streak}`;
+        const totalQs = isRetrySession ? wrongAnswers.length + questionCount : questionsPerSession;
         const progress = (questionCount / questionsPerSession) * 100;
         progressBar.style.width = `${progress}%`;
     };
@@ -284,10 +292,23 @@ document.addEventListener('DOMContentLoaded', () => {
             starsDisplay.appendChild(star);
         }
 
-        if (percentage === 100) resultsMessage.textContent = "¡Perfecto! 🏆";
-        else if (percentage >= 80) resultsMessage.textContent = "¡Excelente! 👏";
-        else if (percentage >= 50) resultsMessage.textContent = "¡Bien hecho! 👍";
-        else resultsMessage.textContent = "Sigue practicando 💪";
+        if (percentage === 100) {
+            resultsMessage.textContent = "¡Perfecto! 🏆";
+            retryContainer.classList.add('hidden');
+        } else if (percentage >= 80) {
+            resultsMessage.textContent = "¡Excelente! 👏";
+        } else if (percentage >= 50) {
+            resultsMessage.textContent = "¡Bien hecho! 👍";
+        } else {
+            resultsMessage.textContent = "Sigue practicando 💪";
+        }
+
+        if (wrongAnswers.length > 0) {
+            retryContainer.classList.remove('hidden');
+            retryMessage.textContent = `¡Casi perfecto! Te faltaron ${wrongAnswers.length} para el 100%. ¿Vamos por la revancha?`;
+        } else if (percentage < 100) {
+            retryContainer.classList.add('hidden');
+        }
     };
 
     let timerEnabled = true;
@@ -338,6 +359,10 @@ document.addEventListener('DOMContentLoaded', () => {
             if (b.textContent === currentQuestion.name) b.classList.add('correct');
         });
 
+        if (!wrongAnswers.includes(currentQuestion.id)) {
+            wrongAnswers.push(currentQuestion.id);
+        }
+
         streak = 0;
         questionCount++;
 
@@ -353,6 +378,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const countVal = configCount.value;
         questionsPerSession = countVal === 'all' ? 9999 : parseInt(countVal);
         timerEnabled = configTimer.checked;
+        isRetrySession = false;
 
         if (!timerEnabled) {
             timerBar.classList.add('hidden');
@@ -385,6 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
         streak = 0;
         questionCount = 0;
         usedQuestions.clear();
+        wrongAnswers = [];
         isSecondCheck = false;
 
         quizStart.classList.add('hidden');
@@ -395,13 +422,41 @@ document.addEventListener('DOMContentLoaded', () => {
         nextQuestion();
     };
 
+    const startRetrySession = () => {
+        if (wrongAnswers.length === 0) return;
+
+        isRetrySession = true;
+        questionsPerSession = wrongAnswers.length;
+        const idsToRetry = [...wrongAnswers];
+
+        score = 0;
+        streak = 0;
+        questionCount = 0;
+        usedQuestions.clear();
+        wrongAnswers = [];
+        isSecondCheck = false;
+
+        quizStart.classList.add('hidden');
+        quizGame.classList.remove('hidden');
+        quizResults.classList.add('hidden');
+        window.retryIds = idsToRetry;
+
+        updateScoreBoard();
+        nextQuestion();
+    }
 
     const nextQuestion = () => {
-        const playableSignals = appData.filter(s =>
-            s.name &&
-            s.name.trim() !== "" &&
-            selectedCategories.includes(s.category)
-        );
+        let playableSignals;
+
+        if (isRetrySession && window.retryIds) {
+            playableSignals = appData.filter(s => window.retryIds.includes(s.id));
+        } else {
+            playableSignals = appData.filter(s =>
+                s.name &&
+                s.name.trim() !== "" &&
+                selectedCategories.includes(s.category)
+            );
+        }
 
         const actualLimit = Math.min(questionsPerSession, playableSignals.length);
 
@@ -517,6 +572,10 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             btnElement.classList.add('incorrect');
 
+            if (!wrongAnswers.includes(currentQuestion.id)) {
+                wrongAnswers.push(currentQuestion.id);
+            }
+
             if (isCategoryCheck) {
                 feedbackDiv.textContent = `Incorrecto. Era: ${currentQuestion.category}`;
                 buttons.forEach(b => {
@@ -548,6 +607,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnStartQuiz.addEventListener('click', startQuizSession);
     btnNext.addEventListener('click', nextQuestion);
+    btnRetry.addEventListener('click', startRetrySession);
 
     btnRestart.addEventListener('click', () => {
         resetQuizView();
