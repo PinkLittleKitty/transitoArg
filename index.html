@@ -15,6 +15,7 @@
         <div class="container">
             <h1>🚦 Señales de Tránsito</h1>
             <nav>
+                <button id="btn-theme" class="nav-btn" title="Cambiar Tema">🌙</button>
                 <button id="btn-study" class="nav-btn active">📖 Estudiar / Editar</button>
                 <button id="btn-quiz" class="nav-btn">📝 Examen</button>
                 <button id="btn-export" class="nav-btn export-btn">💾 Descargar Datos</button>
@@ -25,10 +26,10 @@
     <main class="container">
         <section id="study-section" class="active">
             <div class="info-banner">
-                <p>💡 Haz clic en una señal para editar su nombre y categoría. Los nombres que ingreses se usarán en el
-                    examen.</p>
+                <p>💡 Hacé clic en una señal para editar su nombre y categoría. Los nombres que ingreses se van a usar
+                    en el examen.</p>
                 <div class="stats">
-                    <span>Identificadas: <strong id="identified-count">0</strong>/22</span>
+                    <span>Identificadas: <strong id="identified-count">0</strong>/226</span>
                 </div>
             </div>
             <div class="signals-grid" id="signals-grid">
@@ -38,14 +39,19 @@
         <section id="quiz-section" class="hidden">
             <div id="quiz-start" class="quiz-container">
                 <h2>¿Listo para practicar?</h2>
-                <p>El examen usará las señales que ya has nombrado. ¡Asegúrate de estudiar primero!</p>
+                <p>El examen consistirá en <strong>10 preguntas</strong> aleatorias.</p>
                 <button id="start-quiz-btn" class="primary-btn">Comenzar Examen</button>
             </div>
 
             <div id="quiz-game" class="quiz-container hidden">
                 <div class="quiz-header">
-                    <span id="score">Puntos: 0</span>
-                    <span id="streak">Racha: 🔥 0</span>
+                    <div class="progress-container">
+                        <div id="quiz-progress-bar" class="progress-bar"></div>
+                    </div>
+                    <div class="score-streak">
+                        <span id="score">Puntos: 0</span>
+                        <span id="streak">Racha: 🔥 0</span>
+                    </div>
                 </div>
                 <div class="quiz-card">
                     <img id="quiz-image" src="" alt="Señal de tránsito">
@@ -54,6 +60,24 @@
                 </div>
                 <div id="feedback" class="feedback hidden"></div>
                 <button id="next-question" class="secondary-btn hidden">Siguiente Señal</button>
+            </div>
+
+            <div id="quiz-results" class="quiz-container hidden">
+                <h2>¡Examen Completado! 🎉</h2>
+                <div class="results-summary">
+                    <div class="final-score">
+                        <span id="final-score-val">0</span>
+                        <span class="label">Puntos</span>
+                    </div>
+                    <div class="stars-container" id="stars-display">
+                        <!-- ⭐⭐⭐ -->
+                    </div>
+                    <p id="results-message">¡Buen trabajo!</p>
+                </div>
+                <div class="results-actions">
+                    <button id="restart-quiz-btn" class="primary-btn">Jugar de Nuevo</button>
+                    <button id="back-study-btn" class="secondary-btn">Volver a Estudiar</button>
+                </div>
             </div>
         </section>
     </main>

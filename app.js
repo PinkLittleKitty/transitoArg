@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', () => {
     let appData = JSON.parse(localStorage.getItem('drivingQuizData')) || signalsData;
 
-    // If the number of signals changed, merge the data
     if (appData.length !== signalsData.length) {
         const savedMap = new Map(appData.map(s => [s.id, s]));
         appData = signalsData.map(signal => {
@@ -10,6 +9,27 @@ document.addEventListener('DOMContentLoaded', () => {
         });
         localStorage.setItem('drivingQuizData', JSON.stringify(appData));
     }
+
+    const btnTheme = document.getElementById('btn-theme');
+    const questionsPerSession = 10;
+
+    const toggleTheme = () => {
+        document.body.classList.toggle('dark-mode');
+        const isDark = document.body.classList.contains('dark-mode');
+        localStorage.setItem('darkMode', isDark);
+        btnTheme.textContent = isDark ? '☀️' : '🌙';
+    };
+
+    const loadTheme = () => {
+        const isDark = localStorage.getItem('darkMode') === 'true';
+        if (isDark) {
+            document.body.classList.add('dark-mode');
+            btnTheme.textContent = '☀️';
+        }
+    };
+
+    btnTheme.addEventListener('click', toggleTheme);
+    loadTheme();
 
     const saveState = () => {
         localStorage.setItem('drivingQuizData', JSON.stringify(appData));
@@ -35,6 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const quizStart = document.getElementById('quiz-start');
     const quizGame = document.getElementById('quiz-game');
+    const quizResults = document.getElementById('quiz-results');
     const btnStartQuiz = document.getElementById('start-quiz-btn');
     const quizImage = document.getElementById('quiz-image');
     const quizOptions = document.getElementById('quiz-options');
@@ -42,10 +63,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const streakSpan = document.getElementById('streak');
     const feedbackDiv = document.getElementById('feedback');
     const btnNext = document.getElementById('next-question');
+    const progressBar = document.getElementById('quiz-progress-bar');
+
+    const finalScoreVal = document.getElementById('final-score-val');
+    const starsDisplay = document.getElementById('stars-display');
+    const resultsMessage = document.getElementById('results-message');
+    const btnRestart = document.getElementById('restart-quiz-btn');
+    const btnBackStudy = document.getElementById('back-study-btn');
 
     let score = 0;
     let streak = 0;
     let currentQuestion = null;
+    let questionCount = 0;
+    let usedQuestions = new Set();
 
     const switchTab = (mode) => {
         if (mode === 'study') {
@@ -151,14 +181,19 @@ document.addEventListener('DOMContentLoaded', () => {
     const resetQuizView = () => {
         quizStart.classList.remove('hidden');
         quizGame.classList.add('hidden');
+        quizResults.classList.add('hidden');
         score = 0;
         streak = 0;
+        questionCount = 0;
+        usedQuestions.clear();
         updateScoreBoard();
     };
 
     const updateScoreBoard = () => {
         scoreSpan.textContent = `Puntos: ${score}`;
         streakSpan.textContent = `Racha: 🔥 ${streak}`;
+        const progress = (questionCount / questionsPerSession) * 100;
+        progressBar.style.width = `${progress}%`;
     };
 
     const getDistractors = (correctSignal) => {
@@ -167,7 +202,39 @@ document.addEventListener('DOMContentLoaded', () => {
         return shuffled.slice(0, 3);
     };
 
+    const showResults = () => {
+        quizGame.classList.add('hidden');
+        quizResults.classList.remove('hidden');
+
+        finalScoreVal.textContent = score;
+
+        let stars = 1;
+        if (score >= 80) stars = 3;
+        else if (score >= 50) stars = 2;
+
+        starsDisplay.innerHTML = '';
+        for (let i = 0; i < 3; i++) {
+            const star = document.createElement('span');
+            star.textContent = '⭐';
+            star.className = 'star';
+            if (i < stars) {
+                setTimeout(() => star.classList.add('active'), i * 200 + 300);
+            }
+            starsDisplay.appendChild(star);
+        }
+
+        if (score === 100) resultsMessage.textContent = "¡Perfecto! 🏆";
+        else if (score >= 80) resultsMessage.textContent = "¡Excelente! 👏";
+        else if (score >= 50) resultsMessage.textContent = "¡Bien hecho! 👍";
+        else resultsMessage.textContent = "Sigue practicando 💪";
+    };
+
     const nextQuestion = () => {
+        if (questionCount >= questionsPerSession) {
+            showResults();
+            return;
+        }
+
         const playableSignals = appData.filter(s => s.name && s.name.trim() !== "");
 
         if (playableSignals.length < 4) {
@@ -176,12 +243,24 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
-        currentQuestion = playableSignals[Math.floor(Math.random() * playableSignals.length)];
+        const availableQuestions = playableSignals.filter(s => !usedQuestions.has(s.id));
+
+        if (availableQuestions.length === 0) {
+            usedQuestions.clear();
+            availableQuestions.push(...playableSignals);
+        }
+
+        currentQuestion = availableQuestions[Math.floor(Math.random() * availableQuestions.length)];
+        usedQuestions.add(currentQuestion.id);
 
         quizImage.src = currentQuestion.src;
         quizOptions.innerHTML = '';
         feedbackDiv.className = 'feedback hidden';
         btnNext.classList.add('hidden');
+
+        quizImage.style.animation = 'none';
+        quizImage.offsetHeight; /* trigger reflow */
+        quizImage.style.animation = 'popIn 0.5s ease';
 
         const distractors = getDistractors(currentQuestion);
         const options = [currentQuestion, ...distractors];
@@ -197,11 +276,15 @@ document.addEventListener('DOMContentLoaded', () => {
 
         quizStart.classList.add('hidden');
         quizGame.classList.remove('hidden');
+
+        updateScoreBoard();
     };
 
     const handleAnswer = (selected, btnElement) => {
         const buttons = quizOptions.querySelectorAll('button');
         buttons.forEach(b => b.disabled = true);
+
+        questionCount++;
 
         if (selected.id === currentQuestion.id) {
             btnElement.classList.add('correct');
@@ -209,6 +292,9 @@ document.addEventListener('DOMContentLoaded', () => {
             feedbackDiv.className = "feedback success";
             score += 10;
             streak++;
+            scoreSpan.parentElement.style.animation = 'none';
+            scoreSpan.parentElement.offsetHeight;
+            scoreSpan.parentElement.style.animation = 'popIn 0.3s ease';
         } else {
             btnElement.classList.add('incorrect');
             feedbackDiv.textContent = `Incorrecto. Era: ${currentQuestion.name}`;
@@ -217,6 +303,8 @@ document.addEventListener('DOMContentLoaded', () => {
             buttons.forEach(b => {
                 if (b.textContent === currentQuestion.name) b.classList.add('correct');
             });
+            quizGame.style.animation = 'shake 0.4s ease';
+            setTimeout(() => quizGame.style.animation = '', 400);
         }
 
         feedbackDiv.classList.remove('hidden');
@@ -226,6 +314,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     btnStartQuiz.addEventListener('click', nextQuestion);
     btnNext.addEventListener('click', nextQuestion);
+
+    btnRestart.addEventListener('click', () => {
+        resetQuizView();
+        nextQuestion();
+    });
+
+    btnBackStudy.addEventListener('click', () => switchTab('study'));
 
     renderGrid();
     updateStats();
